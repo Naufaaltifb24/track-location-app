@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tracking Lokasi Pengunjung</title>
+  <style>
+    /* Styling modern, minimal dengan glass morphism dan responsive */
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0; padding: 0;
+      background: linear-gradient(135deg, #6366f1cc, #06b6d4cc);
+      backdrop-filter: blur(10px);
+      height: 100vh;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      color: white;
+      text-align: center;
+      padding: 16px;
+    }
+    main {
+      background: rgba(255 255 255 / 0.1);
+      padding: 24px;
+      border-radius: 16px;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0 0 0 / 0.2);
+    }
+    button {
+      background: linear-gradient(135deg, #4f46e5, #14b8a6);
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.2s ease-in-out;
+    }
+    button:hover {
+      transform: scale(1.05);
+    }
+    #message {
+      margin-top: 16px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Tracking Lokasi Anda</h1>
+    <p>Menekan tombol di bawah akan membagikan lokasi Anda secara aman ke sistem kami.</p>
+    <button id="btnTrack">Kirim Lokasi</button>
+    <div id="message" aria-live="polite"></div>
+  </main>
+
+  <script>
+    const btn = document.getElementById('btnTrack');
+    const message = document.getElementById('message');
+
+    btn.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        message.textContent = 'Geolokasi tidak didukung browser Anda.';
+        return;
+      }
+      message.textContent = 'Mengambil lokasi...';
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const data = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          };
+          message.textContent = 'Mengirim lokasi ke server...';
+
+          fetch('/api/location', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          })
+          .then(res => res.json())
+          .then(result => {
+            message.textContent = 'Lokasi berhasil dikirim. Terima kasih!';
+            btn.disabled = true;
+          })
+          .catch(() => {
+            message.textContent = 'Gagal mengirim lokasi. Coba lagi.';
+          });
+        },
+        (error) => {
+          message.textContent = 'Gagal mendapatkan lokasi: ' + error.message;
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
+  </script>
+</body>
+</html>
